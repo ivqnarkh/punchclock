@@ -15,6 +15,7 @@ export default function AuthProvider({ children }) {
             })
             const data = await response.json()
             setUser(data.data)
+            return data.data
         } catch (error) {
             console.error('Failed to check auth status', error)
             setUser(null)
@@ -39,11 +40,8 @@ export default function AuthProvider({ children }) {
                 const error = await response.json()
                 throw new Error(error.error || "Failed to sign in")
             }
-            
-            const data = await response.json()
-            setUser(data.data)
-
-            return await checkAuth()
+            const user = await checkAuth()
+            return user
         } finally {
             setLoading(false)
         }

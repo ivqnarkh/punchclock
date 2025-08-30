@@ -9,18 +9,28 @@ export default function LoginPage() {
     })
     const [ errors, setErrors ] = useState("")
     const [ submitting, setSubmitting ] = useState(false)
-    const { signIn, user } = useAuth()
+    const { signIn, user, loading } = useAuth()
     const navigate = useNavigate()
+
+    if (loading) return null
+
+    if (user?.role === 'ADMIN') {
+        return <Navigate to="/admin" replace />
+    }
+
+    if (user?.role === 'USER') {
+        return <Navigate to='/employee' replace />
+    }
 
     const handleSubmit = async (e) => {
         try {
             setSubmitting(true)
             setErrors({})
 
-            await signIn(formData.username, formData.password)
+            const me = await signIn(formData.username, formData.password)
 
-            console.log(user)
-            navigate(user.role === "ADMIN" ? '/admin' : '/employee' )
+            console.log(me)
+            navigate(me?.role === "ADMIN" ? '/admin' : '/employee' )
         } catch {
             setErrors({ submit: 'Failed to sign in' })
         } finally {
@@ -61,7 +71,8 @@ export default function LoginPage() {
                     value={formData.password}
                     required
                     onChange={handleChange}
-                />
+                /><br></br>
+                {errors.submit && <p className="text-red-500">{errors.submit}</p>}
                 <button type="submit">Log in</button>
             </form>
         </div>

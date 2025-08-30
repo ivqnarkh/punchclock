@@ -50,7 +50,7 @@ function requireRole (role) {
 app.get('/api/me', isAuth, (req, res) => {
     const user = req.session.user
     return res.status(200).json({ data: {
-        id: user.username,
+        id: user.id,
         role: user.role,
         username: user.username
     }})

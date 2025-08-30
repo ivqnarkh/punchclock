@@ -1,9 +1,11 @@
-
+import SignOutButton from '../components/SignOutButton'
 
 export default function EmployeePage() {
 
-
     return (
-        <h1>Employee Page</h1>
+        <div>
+            <h1>Employee Page</h1>
+            <SignOutButton />
+        </div>
     )
 }
