@@ -1,42 +1,36 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
-    const navigate = useNavigate()
     const [ formData, setFormData ] = useState({
         username: "",
         password: ""
     })
+    const [ errors, setErrors ] = useState("")
+    const [ submitting, setSubmitting ] = useState(false)
+    const { signIn, user } = useAuth()
+    const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
-        console.log("fetching login")
-        const response = await fetch('/api/login', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        })
-        console.log("fetched login")
-        if (!response.ok) {
-            const error = await response.json()
-            throw new Error(error.error || 'Failed to login')
+        try {
+            setSubmitting(true)
+            setErrors({})
+
+            await signIn(formData.username, formData.password)
+
+            console.log(user)
+            navigate(user.role === "ADMIN" ? '/admin' : '/employee' )
+        } catch {
+            setErrors({ submit: 'Failed to sign in' })
+        } finally {
+            setSubmitting(false)
         }
+    }
 
-        const userRes = await fetch('/api/me')
-
-        const user = await userRes.json()
-
-        console.log("role" + user.data.role)
-        if (!userRes.ok) {
-            navigate('/login')
-        } else {
-            if (user.data.role === "ADMIN") {
-                navigate('/admin')
-            } else {
-                navigate('/employee')
-            }
-        }
+    const handleChange = async (e) => {
+        const { name, value } = e.target 
+        setFormData((prev) => ({ ...prev, [name]: value}))
     }
 
     return (
@@ -55,7 +49,7 @@ export default function LoginPage() {
                     id="username-input"
                     value={formData.username}
                     required
-                    onChange={(e) => setFormData(prev => ({...prev, username: e.target.value}))}
+                    onChange={handleChange}
                 />
                 <label htmlFor="password-input">
                     Password
@@ -66,7 +60,7 @@ export default function LoginPage() {
                     id="password-input"
                     value={formData.password}
                     required
-                    onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
+                    onChange={handleChange}
                 />
                 <button type="submit">Log in</button>
             </form>
