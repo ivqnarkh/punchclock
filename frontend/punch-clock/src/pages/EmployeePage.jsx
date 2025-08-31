@@ -2,6 +2,7 @@ import SignOutButton from '../components/SignOutButton'
 import PunchesList from '../components/PunchesList'
 import { useState, useEffect } from 'react'
 import { fetchHoursWorked } from '../api/hours'
+import DateRangeFilter from '../components/DateRangeFilter'
 
 export default function EmployeePage() {
     const [location, setLocation] = useState("")
@@ -56,15 +57,15 @@ export default function EmployeePage() {
             setSuccess("Punch recorded successfully!")
         }
 
-        setRefreshTrigger(prev => prev + 1)  // Refresh punch list and hours
-        setLocation("")  // Reset location input
+        setRefreshTrigger(prev => prev + 1)
+        setLocation("")
 
         setTimeout(() => setSuccess(""), 3000)
 
         } catch (networkError) {
-        setError("Network error. Please check your connection and try again.")
+            setError("Network error. Please check your connection and try again.")
         } finally {
-        setLoading(false)
+            setLoading(false)
         }
     }
 
@@ -96,14 +97,12 @@ export default function EmployeePage() {
             <p>Total hours worked: {hoursWorked}h</p>
         )}
         
-        <label>
-            Start Date:
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-        </label>
-        <label>
-            End Date:
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-        </label>
+        <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onStartChange={setStartDate}
+            onEndChange={setEndDate}
+        />
 
         <PunchesList refreshTrigger={refreshTrigger} />
         <SignOutButton />

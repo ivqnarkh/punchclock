@@ -27,6 +27,7 @@ app.use(session({
         }
 }))
 
+//verify auth status
 function isAuth (req, res, next) {
     if (!req.session.user) {
         return res.status(401).json({ error: "Unauthorized"})
@@ -47,6 +48,7 @@ function requireRole (role) {
     next()
 }}
 
+//return current user
 app.get('/api/me', isAuth, (req, res) => {
     const user = req.session.user
     return res.status(200).json({ data: {
@@ -115,24 +117,26 @@ app.post('/api/logout', (req, res) => {
     })
 })
 
-
+//create punch route
 app.post('/api/me/punches', isAuth, async (req, res) => {
     try {
-        const userId = req.session.user.id;
-        const username = req.session.user.username;
+        const userId = req.session.user.id
+        const username = req.session.user.username
 
-        
+        //isolate into transaction
         const punch = await prisma.$transaction(async (tx) => {
             const recent = await tx.punch.findFirst({
                 where: { userid: userId },
                 orderBy: { punchedAt: 'desc' },
                 select: { type: true },
-            });
+            })
 
-            const nextType = recent?.type === 'IN' ? 'OUT' : 'IN'; // ensure matches your enum literals
+            //determine next punch type
+            const nextType = recent?.type === 'IN' ? 'OUT' : 'IN'
 
-            const { location } = req.body;
+            const { location } = req.body
 
+            //create punch in db
             const created = await tx.punch.create({
                 data: {
                 location,
@@ -148,12 +152,12 @@ app.post('/api/me/punches', isAuth, async (req, res) => {
                 userid: true,
                 username: true,
                 },
-            });
+            })
 
-            return created;
+            return created
         });
 
-        return res.status(200).json({ punch });
+        return res.status(200).json({ punch })
     } catch (error) {
         return res.status(503).json({ error: "Failed creating punch", error})
     }
@@ -316,6 +320,23 @@ app.get('/api/hoursWorked', isAuth, async (req, res) => {
     }
 })
 
+//get list of employees
+app.get('/api/employees', isAuth, requireRole("ADMIN"), async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            where: {
+                role: "USER"
+            },
+            select: {
+                id: true, username: true
+            }
+        })
+
+        return res.status(200).json({ users })
+    } catch (error) {
+        return res.status(400).json({ error: "Failed to retrieve hours worked"})
+    }
+})
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
