@@ -3,6 +3,7 @@ import SignOutButton from '../components/SignOutButton'
 import PunchesList from '../components/PunchesList'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { fetchHoursWorked } from '../api/hours'
+import AdminRegisterUser from '../components/AdminRegisterUser'
 
 export default function AdminPage() {
     const [userId, setUserId] = useState('')
@@ -35,6 +36,10 @@ export default function AdminPage() {
         setUsers(data.users)
     }
 
+    function handleUserRegistered(newUser) {
+        setUsers(prev => [...prev, newUser])
+    }
+
     useEffect(() => {
         getUsers()
         updateHoursWorked()
@@ -55,7 +60,7 @@ export default function AdminPage() {
         </label>
 
         {error && <p className="text-red-500" role="alert">{error}</p>}
-        
+
         <DateRangeFilter
             startDate={startDate}
             endDate={endDate}
@@ -72,7 +77,9 @@ export default function AdminPage() {
         ) : (
             <p>Please select a user to view punches.</p>
         )}
-
+        <div>
+            <AdminRegisterUser onUserRegistered={handleUserRegistered} />
+        </div>
         <SignOutButton />
         </div>
     )

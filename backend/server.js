@@ -23,7 +23,7 @@ const pgPool = new Pool({
     ssl: isProd ? { rejectUnauthorized: false} : false
 })
 
-const allowedOrigins = ['', '']
+const allowedOrigins = ['https://punchclockdemo.vercel.app/']
 
 app.use(cors({
     origin: allowedOrigins,
@@ -34,14 +34,15 @@ app.use(session({
     store: new pgSession({
         pool: pgPool,
         tableName: 'session',
-        createTableIfMissing: true
+        createTableIfMissing: true,
+        pruneSessionInterval: 1000 * 60 * 60
     }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        maxAge: 1000 * 60 * 30,
+        maxAge: 1000 * 60,
         sameSite: 'lax',
         secure: isProd
         }
@@ -358,5 +359,5 @@ app.get('/api/employees', isAuth, requireRole("ADMIN"), async (req, res) => {
 })
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`)
+    console.log(process.env.PORT)
 })
