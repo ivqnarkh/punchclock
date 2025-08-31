@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 
 const AuthContext = createContext(null)
+const apiBase = import.meta.env.VITE_API_URL
 
 export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
@@ -10,7 +11,7 @@ export default function AuthProvider({ children }) {
     async function checkAuth() {
         setLoading(true)
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/me`, {
+            const response = await fetch(`${apiBase}/api/me`, {
                 credentials: 'include'
             })
             const data = await response.json()
@@ -28,7 +29,7 @@ export default function AuthProvider({ children }) {
     async function signIn(username, password) {
         setLoading(true)
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
+            const response = await fetch(`${apiBase}/api/login`, {
                 method: "POST",
                 credentials: 'include',
                 headers: {
@@ -49,7 +50,7 @@ export default function AuthProvider({ children }) {
 
     //send logout post to api and update user
     async function signOut() {
-        await fetch(`${import.meta.env.VITE_API_URL}/api/logout`, {
+        await fetch(`${apiBase}/api/logout`, {
             method: "POST",
             credentials: 'include'
         })
