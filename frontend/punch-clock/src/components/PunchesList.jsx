@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback} from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
-export default function PunchesList() {
+export default function PunchesList({ refreshTrigger }) {
   const [punches, setPunches] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
@@ -29,8 +29,14 @@ export default function PunchesList() {
   }, [cursor, hasMore])
 
   useEffect(() => {
+    setPunches([])
+    setCursor(null)
+    setHasMore(true)
+  }, [refreshTrigger])
+
+  useEffect(() => {
     loadMore()
-  }, [])
+  }, [loadMore])
 
   return (
     <div

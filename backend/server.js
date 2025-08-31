@@ -164,7 +164,7 @@ app.get('/api/punches', isAuth, async (req, res) => {
     try {
 
         //parse query params 
-        effectiveUID = req.session.user.id
+        let effectiveUID = req.session.user.id
 
         if (req.session.user.role === "ADMIN") {
             effectiveUID = Number(req.query.userId)
@@ -217,7 +217,18 @@ app.post('/api/admin/registerUser', isAuth, requireRole("ADMIN"), async (req, re
 
         //validate input
         if (!username || !password || !role) {
-            return res.status(400).json({ error: "Fill required fields"})
+            return res.status(400).json({ error: "Fill required fields" })
+        }
+
+        //check for existing username
+        const exists = await prisma.user.findUnique({
+            where: {
+                username: username
+            }
+        })
+
+        if (exists) {
+            return res.status(409).json({ error: "Username already exists" })
         }
 
         const passwordHash = await bcrypt.hash(password, 12)
@@ -233,10 +244,77 @@ app.post('/api/admin/registerUser', isAuth, requireRole("ADMIN"), async (req, re
 
         return res.status(200).json({ user })
     } catch (error) {
-        return res.status(503).json({ error: "Failed registering user"})
+        return res.status(503).json({ error: "Failed registering user" })
     }
 })
 
+//calculate hours worked
+app.get('/api/hoursWorked', isAuth, async (req, res) => {
+    try {
+        let userId = req.session.user.id
+
+        //if admin select userid based on query params
+        if (req.session.user.role === 'ADMIN' && req.query.userId) {
+        userId = Number(req.query.userId)
+        if (isNaN(userId)) return res.status(400).json({ error: "Invalid userId" })
+        }
+
+        //get date filters from request
+        const { startDate, endDate } = req.query
+        let start = startDate ? new Date(startDate) : null
+        let end = endDate ? new Date(endDate) : null
+
+        if (start && isNaN(start.getTime())) {
+            return res.status(400).json({ error: "Invalid startDate" })
+        }
+
+        if (end && isNaN(end.getTime())) {
+            return res.status(400).json({ error: "Invalid endDate" })
+        }
+
+        //clamp dates to be inclusive of days selected, convert local time to UTC
+        const dateFilter = {}
+        if (start) dateFilter.gte = start
+        if (end) {
+            const day = end.getUTCDate()
+            const month = end.getUTCMonth()
+            const year = end.getUTCFullYear()
+            end = new Date(Date.UTC(year, month, day, 23, 59, 59, 999))
+            dateFilter.lte = end
+        }
+
+        //get punches from db based on time filter
+        const punches = await prisma.punch.findMany({
+        where: {
+            userid: userId,
+            punchedAt: Object.keys(dateFilter).length ? dateFilter : undefined,
+        },
+        orderBy: { punchedAt: 'asc' },
+        select: { type: true, punchedAt: true }
+        })
+
+        let totalSeconds = 0
+        let inTime = null
+
+        //loop through punches and pair each in with out, calculate difference
+        for (const punch of punches) {
+        if (punch.type === PunchType.IN) {
+            inTime = punch.punchedAt
+        } else if (punch.type === PunchType.OUT && inTime) {
+            totalSeconds += (punch.punchedAt.getTime() - inTime.getTime()) / 1000
+            inTime = null
+        }
+        }
+
+        //convert to hours and return
+        const hoursWorked = +(totalSeconds / 3600).toFixed(2)
+        return res.status(200).json({ hoursWorked })
+
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ error: "Failed to calculate hours worked" })
+    }
+})
 
 
 app.listen(PORT, () => {
