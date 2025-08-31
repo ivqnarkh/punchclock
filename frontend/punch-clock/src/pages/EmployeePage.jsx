@@ -34,7 +34,7 @@ export default function EmployeePage() {
         setLoading(true)
 
         try {
-        const response = await fetch('/api/me/punches', {
+        const response = await fetch('/api/punches', {
             method: "POST",
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,7 @@ export default function EmployeePage() {
         setRefreshTrigger(prev => prev + 1)
         setLocation("")
 
-        setTimeout(() => setSuccess(""), 3000)
+        setTimeout(() => setSuccess(""), 60000)
 
         } catch (networkError) {
             setError("Network error. Please check your connection and try again.")

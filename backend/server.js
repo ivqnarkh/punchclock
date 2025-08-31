@@ -1,6 +1,9 @@
 const express = require('express')
 const session = require('express-session')
 const bcrypt = require('bcrypt')
+const pgSession = require('connect-pg-simple')(session)
+const cors = require('cors')
+const { Pool } = require('pg')
 const { PrismaClient, PunchType } = require('@prisma/client')
 const prisma = new PrismaClient()
 
@@ -15,15 +18,32 @@ if (isProd) {
 app.use(express.urlencoded({ extended: true}))
 app.use(express.json())
 
+const pgPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: isProd ? { rejectUnauthorized: false} : false
+})
+
+const allowedOrigins = ['', '']
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}))
+
 app.use(session({
-    secret: 'keyboard-cat',
+    store: new pgSession({
+        pool: pgPool,
+        tableName: 'session',
+        createTableIfMissing: true
+    }),
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
         maxAge: 1000 * 60 * 30,
         sameSite: 'lax',
-        secure: false
+        secure: isProd
         }
 }))
 
@@ -65,7 +85,7 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(401).json({ error: "Username and password are required."})
+        return res.status(400).json({ error: "Username and password are required."})
     }
 
     const user = await prisma.user.findUnique({
@@ -74,13 +94,13 @@ app.post('/api/login', async (req, res) => {
     })
 
     if (!user) {
-        return res.status(400).send({ error: "Invalid username or password"})
+        return res.status(401).send({ error: "Invalid username or password"})
     }
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash)
 
     if (!passwordMatch) {
-        return res.status(400).send({ error: "Invalid username or password"})
+        return res.status(401).send({ error: "Invalid username or password"})
     }
 
     //generate cookie for successful login
@@ -106,7 +126,7 @@ app.post('/api/login', async (req, res) => {
 //logout route
 app.post('/api/logout', (req, res) => {
     if(!req.session.user) {
-        return res.status(400).json({ error: "Not logged in"})
+        return res.status(401).json({ error: "Not logged in"})
     }
     req.session.destroy(function (err) {
         if (err) {
@@ -118,7 +138,7 @@ app.post('/api/logout', (req, res) => {
 })
 
 //create punch route
-app.post('/api/me/punches', isAuth, async (req, res) => {
+app.post('/api/punches', isAuth, async (req, res) => {
     try {
         const userId = req.session.user.id
         const username = req.session.user.username
@@ -159,7 +179,7 @@ app.post('/api/me/punches', isAuth, async (req, res) => {
 
         return res.status(200).json({ punch })
     } catch (error) {
-        return res.status(503).json({ error: "Failed creating punch", error})
+        return res.status(503).json({ error: "Failed creating punch"})
     }
 })
 
@@ -209,8 +229,7 @@ app.get('/api/punches', isAuth, async (req, res) => {
 
         return res.status(200).json({ data: punches, nextCursor })
     } catch (error) {
-        console.log(error)
-        return res.status(503).json({ error })
+        return res.status(500).json({ error: "Failed retrieving punches" })
     }
 })
 
@@ -248,7 +267,7 @@ app.post('/api/admin/registerUser', isAuth, requireRole("ADMIN"), async (req, re
 
         return res.status(200).json({ user })
     } catch (error) {
-        return res.status(503).json({ error: "Failed registering user" })
+        return res.status(500).json({ error: "Failed registering user" })
     }
 })
 
@@ -334,7 +353,7 @@ app.get('/api/employees', isAuth, requireRole("ADMIN"), async (req, res) => {
 
         return res.status(200).json({ users })
     } catch (error) {
-        return res.status(400).json({ error: "Failed to retrieve hours worked"})
+        return res.status(500).json({ error: "Failed to retrieve hours worked"})
     }
 })
 
