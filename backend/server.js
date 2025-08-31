@@ -118,30 +118,44 @@ app.post('/api/logout', (req, res) => {
 
 app.post('/api/me/punches', isAuth, async (req, res) => {
     try {
-        await prisma.$transaction(async (tx) => {
-            const recentPunch = await tx.punch.findFirst({
-                where: {
-                    userid: req.session.user.id
-                }, orderBy: {
-                    punchedAt: 'desc'
-            }
-        })
+        const userId = req.session.user.id;
+        const username = req.session.user.username;
 
-        const nextType = recentPunch?.type === PunchType.IN ? PunchType.OUT : PunchType.IN
+        
+        const punch = await prisma.$transaction(async (tx) => {
+            const recent = await tx.punch.findFirst({
+                where: { userid: userId },
+                orderBy: { punchedAt: 'desc' },
+                select: { type: true },
+            });
 
-        const { location } = req.body
+            const nextType = recent?.type === 'IN' ? 'OUT' : 'IN'; // ensure matches your enum literals
 
-        const punch = await tx.punch.create({
-            data: {
-                location: location,
-                userid: req.session.user.id,
-                username: req.session.user.username,
-                type: nextType
-            }
-        })})
-        return res.status(200).json({ punch })
+            const { location } = req.body;
+
+            const created = await tx.punch.create({
+                data: {
+                location,
+                userid: userId,
+                username,
+                type: nextType,
+                },
+                select: {
+                id: true,
+                type: true,
+                punchedAt: true,
+                location: true,
+                userid: true,
+                username: true,
+                },
+            });
+
+            return created;
+        });
+
+        return res.status(200).json({ punch });
     } catch (error) {
-        return res.status(503).json({ error: "Failed creating punch"})
+        return res.status(503).json({ error: "Failed creating punch", error})
     }
 })
 
