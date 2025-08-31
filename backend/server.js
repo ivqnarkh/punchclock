@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 
 const isProd = process.env.NODE_ENV === 'production'
 const app = express()
-const PORT = 3000
+const port = process.env.PORT || 3000
 
 if (isProd) {
     app.set('trust proxy', 1)
@@ -358,6 +358,6 @@ app.get('/api/employees', isAuth, requireRole("ADMIN"), async (req, res) => {
     }
 })
 
-app.listen(PORT, () => {
+app.listen(port, "0.0.0.0", () => {
     console.log(process.env.PORT)
 })

@@ -10,7 +10,7 @@ export default function AuthProvider({ children }) {
     async function checkAuth() {
         setLoading(true)
         try {
-            const response = await fetch('/api/me', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/me`, {
                 credentials: 'include'
             })
             const data = await response.json()
@@ -28,7 +28,7 @@ export default function AuthProvider({ children }) {
     async function signIn(username, password) {
         setLoading(true)
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
                 method: "POST",
                 credentials: 'include',
                 headers: {
@@ -49,7 +49,7 @@ export default function AuthProvider({ children }) {
 
     //send logout post to api and update user
     async function signOut() {
-        await fetch('/api/logout', {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/logout`, {
             method: "POST",
             credentials: 'include'
         })
