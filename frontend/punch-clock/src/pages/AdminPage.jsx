@@ -4,6 +4,7 @@ import PunchesList from '../components/PunchesList'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { fetchHoursWorked } from '../api/hours'
 import AdminRegisterUser from '../components/AdminRegisterUser'
+import { apiBase } from '../api/apiBase'
 
 export default function AdminPage() {
     const [userId, setUserId] = useState('')
@@ -25,7 +26,7 @@ export default function AdminPage() {
     }
 
     async function getUsers() {
-        const response = await fetch('/api/employees', { credentials: 'include' })
+        const response = await fetch(`${apiBase}/api/employees`, { credentials: 'include' })
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}))

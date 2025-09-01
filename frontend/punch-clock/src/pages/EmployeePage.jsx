@@ -3,6 +3,7 @@ import PunchesList from '../components/PunchesList'
 import { useState, useEffect } from 'react'
 import { fetchHoursWorked } from '../api/hours'
 import DateRangeFilter from '../components/DateRangeFilter'
+import { apiBase } from '../api/apiBase'
 
 export default function EmployeePage() {
     const [location, setLocation] = useState("")
@@ -16,11 +17,11 @@ export default function EmployeePage() {
 
     async function updateHoursWorked() {
         try {
-        const hours = await fetchHoursWorked({ startDate, endDate })
-        setHoursWorked(hours)
+            const hours = await fetchHoursWorked({ startDate, endDate })
+            setHoursWorked(hours)
         } catch (err) {
-        console.error(err)
-        setError('Failed to fetch hours worked')
+            console.error(err)
+            setError('Failed to fetch hours worked')
         }
     }
 
@@ -34,7 +35,7 @@ export default function EmployeePage() {
         setLoading(true)
 
         try {
-        const response = await fetch('/api/punches', {
+        const response = await fetch(`${apiBase}/api/punches`, {
             method: "POST",
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },

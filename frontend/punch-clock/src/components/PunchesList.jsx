@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback} from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import { apiBase } from '../api/apiBase'
 
 export default function PunchesList({ refreshTrigger, userId }) {
     const [punches, setPunches] = useState([])
@@ -10,8 +11,8 @@ export default function PunchesList({ refreshTrigger, userId }) {
       if (!hasMore) return;
       
       let url = cursor
-        ? `/api/punches?cursor=${encodeURIComponent(cursor)}&limit=10`
-        : `/api/punches?limit=10`
+        ? `${apiBase}/api/punches?cursor=${encodeURIComponent(cursor)}&limit=10`
+        : `${apiBase}/api/punches?limit=10`
 
       if (userId) url += `&userId=${userId}`
 

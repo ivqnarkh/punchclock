@@ -1,5 +1,7 @@
+import { apiBase } from "./apiBase"
+
 export async function fetchHoursWorked({ userId, startDate, endDate } = {}) {
-    let url = '/api/hoursWorked'
+    let url = `${apiBase}/api/hoursWorked`
     const params = new URLSearchParams()
 
     if (userId) params.append('userId', userId)
