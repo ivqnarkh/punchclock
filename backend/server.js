@@ -23,7 +23,7 @@ const pgPool = new Pool({
     ssl: isProd ? { rejectUnauthorized: false} : false
 })
 
-const allowedOrigins = ['https://punchclockdemo.vercel.app/']
+const allowedOrigins = ['https://punchclockdemo.vercel.app']
 
 app.use(cors({
     origin: allowedOrigins,
